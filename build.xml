@@ -1,0 +1,46 @@
+<?xml version='1.0'  encoding='utf-8'?>
+<project name="ant-replace-tokens-with-copy-task" default="run">
+
+    <target name="run">
+        <!-- The <copy> task cannot "self-copy" files. So, for each -->
+        <!-- matched file we'll have <copy> read the file, replace the -->
+        <!-- tokens, and write the result to a temporary file. Then, we'll -->
+        <!-- use the <move> task to replace the original files with the -->
+        <!-- modified files. -->
+        <property name="src-root" location="config"/>
+		<property name="dest-root" location="${env}"/>
+		
+		<property name="filtered-file.extension" value="*.filtered-file"/>
+		
+        <copy todir="${src-root}">
+            <fileset dir="${src-root}">
+                <!--<include name="**/*.html"/>
+                <include name="**/*.php"/>-->
+				<include name="**/*.template"/>
+            </fileset>
+            <globmapper from="*" to="${filtered-file.extension}"/>
+            <filterchain>
+                <filterreader classname="org.apache.tools.ant.filters.ReplaceTokens">
+                    <param type="propertiesfile" value="${env}.properties"/>
+                </filterreader>
+            </filterchain>
+        </copy>
+		
+        <move todir="${dest-root}" includeemptydirs="false">
+            <fileset dir="${src-root}" includes="**"/>
+            <globmapper from="${filtered-file.extension}" to="*"/>
+        </move>
+			
+		<!-- remove ".template" extension (i.e. xxx.template to xxx) --> 
+		<move todir="${dest-root}" includeemptydirs="false">
+			<fileset dir="${dest-root}" includes="**/*"/>
+			<mapper type="glob" from="*.template" to="*"/>
+		</move>
+		
+		<!-- copy other non templatized config file to destination folder  --> 
+		<copy todir="${dest-root}">
+			<fileset dir="${src-root}" excludes="**/*.template"/>
+		</copy>
+		
+    </target>
+</project>
